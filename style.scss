@@ -1,0 +1,232 @@
+@import "@fortawesome/fontawesome-free/css/all.css";
+@import "node_modules/bootstrap/scss/bootstrap";
+@import url("https://fonts.googleapis.com/css2?family=Inconsolata:wght@300;600&display=swap");
+
+* {
+  box-sizing: border-box;
+}
+body {
+  background-color: rgb(20, 20, 20);
+  font-family: "Inconsolata", monospace;
+  font-weight: 300;
+  overflow-x: hidden;
+  padding-bottom: 60px;
+}
+#app {
+  #movies-container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .card {
+    background-color: transparent;
+    border: none;
+    padding: 15px;
+    height: auto;
+    max-height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    @media (min-width: 576px) {
+      max-height: 290px;
+    }
+
+    // Medium devices (tablets, 768px and up)
+    @media (min-width: 768px) {
+      max-height: 195px;
+    }
+
+    // Large devices (desktops, 992px and up)
+    @media (min-width: 992px) {
+      max-height: 265px;
+    }
+
+    // Extra large devices (large desktops, 1200px and up)
+    @media (min-width: 1200px) {
+      max-height: 315px;
+    }
+
+    .card-container {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      .fa-heart {
+        position: absolute;
+        color: rgb(255, 230, 0);
+        top: 15px;
+        right: 15px;
+        font-size: 24px;
+      }
+    }
+  }
+}
+.card-img-top {
+  height: auto;
+  max-width: 100%;
+  border-radius: 0;
+}
+
+.img-default {
+  background-color: teal;
+  padding: 15px;
+  font-weight: bold;
+  color: white;
+  height: 100%;
+  width: 100%;
+}
+#one-modal {
+  display: none;
+  position: fixed;
+  background-color: white;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  flex-direction: column;
+  z-index: 7;
+  padding: 30px 15px;
+  height: auto;
+  width: 400px;
+  border-radius: 5px;
+  @media (max-width: 500px) {
+    width: 90%;
+  }
+  .close-btn {
+    cursor: pointer;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 14px;
+    line-height: 14px;
+  }
+}
+h1 {
+  color: hotpink;
+  text-align: center;
+  margin: 15px;
+  font-weight: 600;
+}
+#overlay {
+  /* Height & width depends on how you want to reveal the overlay (see JS below) */
+  height: 100%;
+  width: 100%;
+  position: fixed; /* Stay in place */
+  z-index: 6; /* Sit on top */
+  left: 0;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.8); /* Black w/opacity */
+  overflow-x: hidden; /* Disable horizontal scroll */
+  transition: 0.5s;
+  display: none;
+  &.d-flex {
+    display: flex;
+  }
+}
+.selects {
+  display: flex;
+  justify-content: space-between;
+}
+#recent-film {
+  color: #71b5ec;
+  display: inline-flex;
+  margin: 15px 15px 0 15px;
+  padding: 7px 15px;
+  cursor: pointer;
+  &::before {
+    content: "";
+  }
+  &.active,
+  &:hover {
+    background-color: hotpink;
+    color: rgb(20, 20, 20);
+  }
+}
+
+.description-btn {
+  width: 100%;
+  display: flex;
+  p {
+    width: 50%;
+    margin: 15px;
+    margin-bottom: 5px;
+    color: #71b5ec;
+  }
+}
+
+.select-css {
+  border: none;
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(20, 20, 20);
+  padding: 5px 15px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 15px;
+  appearance: none;
+  background-color: #71b5ec;
+  &:focus {
+    outline: none;
+    border: none;
+    box-shadow: none;
+  }
+  option:hover {
+    background-color: black;
+  }
+}
+h3 {
+  font-size: 18px;
+  color: hotpink;
+  margin: 0 15px 15px 15px;
+}
+.carousel-container {
+  position: relative;
+  overflow: hidden;
+  .go-left {
+    position: absolute;
+    top: 50%;
+    left: 30px;
+    color: hotpink;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 15px;
+    display: flex;
+    z-index: 2;
+    font-size: 24px;
+  }
+  .go-right {
+    position: absolute;
+    color: hotpink;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 15px;
+    display: flex;
+    z-index: 2;
+    font-size: 24px;
+    top: 50%;
+    right: 30px;
+  }
+}
+.carousel {
+  display: flex;
+  .fa-heart {
+    display: none;
+  }
+
+  .card {
+    width: auto;
+    background-color: transparent;
+    .card-container {
+      width: auto;
+      background-color: transparent;
+    }
+
+    img {
+      width: auto;
+      height: 100%;
+    }
+  }
+}
