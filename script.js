@@ -1,6 +1,7 @@
 import './style.scss';
+import 'bootstrap';
 import { movies } from './src/data/movies';
-import { uniqueArray, render } from './src/helpers/functions';
+import { uniqueArray, render, renderInCarousel } from './src/helpers/functions';
 
 // Aller récupérer le local storage et s'il existe, moviesLike = local storage
 let moviesData = localStorage.getItem('moviesliked');
@@ -48,11 +49,18 @@ container.classList.add('container');
 // remplir le container avec titre/select/la modal/...
 container.innerHTML = `<h1>Hackerflix</h1>
                        <h3>Vous pourriez aimer:</h3>
-                       <div class="carousel-container">
-                        <i class="fas fa-chevron-left go-left"></i>
-                        <i class="fas fa-chevron-right go-right"></i>
-                        <div class="carousel"></div>
-                       </div>
+                       <div id="ThumbnailCarousel" class="carousel slide col-xs-12" data-ride="carousel">
+                          <div class="carousel-inner">
+                          </div>
+                          <a class="carousel-control-prev" href="#ThumbnailCarousel" role="button" data-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Previous</span>
+                          </a>
+                          <a class="carousel-control-next" href="#ThumbnailCarousel" role="button" data-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Next</span>
+                          </a>
+                        </div>
                        <div class="description-btn">
                         <p>Trier par Genre:</p><p>Trier par notes:</p>
                        </div>
@@ -77,8 +85,7 @@ const recentMovies = document.getElementById('recent-film');
 const moviesContainer = document.getElementById('movies-container');
 const modal = document.getElementById('one-modal');
 const overlay = document.getElementById('overlay');
-const carousel = document.querySelector('.carousel');
-const carouselContainer = document.querySelector('.carousel-container');
+const carousel = document.querySelector('.carousel-inner');
 
 // fonction pour mettre des images dans le carrousel
 const inCarrousel = () => {
@@ -127,14 +134,16 @@ const inCarrousel = () => {
       }
     }
   });
+  console.log(pictureInCarrousel);
   // on les affiche dans le carousel
-  render(pictureInCarrousel, moviesLike, carousel);
+  renderInCarousel(pictureInCarrousel, carousel);
 };
 
 // vérifier si un film a déjà été liké. non => carousel par défaut oui => inCarousel
 const isLiked = moviesLike.filter((elt) => elt.like);
-(isLiked.length > 0) ? inCarrousel() : render(carouselDefault, moviesLike, carousel);
+(isLiked.length > 0) ? inCarrousel() : renderInCarousel(carouselDefault, carousel);
 render(movies, moviesLike, moviesContainer);
+console.log(carouselDefault);
 
 // rendre unique le tableau des genres => créer les options du select
 const uniqueMoviesGenre = uniqueArray(moviesGenre);
@@ -159,8 +168,6 @@ const toSortBy = () => {
 };
 toSortBy();
 
-// donner une value left = 0 au carousel
-carousel.style.left = 0;
 // clic sur le body
 body.addEventListener('click', (e) => {
   let movieId;
@@ -229,24 +236,6 @@ body.addEventListener('click', (e) => {
       // générer le carousel + stock des données => local storage
       inCarrousel();
       stockData(moviesLike);
-    }
-    // Clique sur la flèche à droite du carousel
-    // décaler le contenu de 25% de sa largeur vers la droite
-  } else if (e.target.classList.contains('go-right')) {
-    const previousWidth = parseInt(getComputedStyle(carouselContainer).width, 10);
-    if (carousel.style.left !== `-${previousWidth * 2}px`) {
-      const previousLeft = carousel.style.left;
-      const leftValue = parseFloat(previousLeft) - (previousWidth / 4);
-      carousel.style.left = `${leftValue}px`;
-    }
-    // Clique sur la flèche à gauche du carousel
-    // décaler le contenu de 25% de sa largeur vers la gauche
-  } else if (e.target.classList.contains('go-left')) {
-    if (carousel.style.left !== '0px') {
-      const previousWidth = parseInt(getComputedStyle(carouselContainer).width, 10);
-      const previousLeft = carousel.style.left;
-      const leftValue = parseFloat(previousLeft) + (previousWidth / 4);
-      carousel.style.left = `${leftValue}px`;
     }
   }
 });
