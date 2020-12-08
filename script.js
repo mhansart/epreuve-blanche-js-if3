@@ -33,7 +33,7 @@ movies.forEach((movie) => {
   // Si le local storage n'existe pas
   // remplir le tableau moviesLike avec un marqueur et la mention like à false
   const marqueur = (movie.img === false) ? movie.title : movie.imdb;
-  if (moviesLike.length <= movies.length) {
+  if (moviesLike.length < movies.length) {
     moviesLike.push({ marqueur: `${marqueur}`, like: false });
   }
   // remplir un tableau avec tous les genres existants
@@ -47,7 +47,8 @@ body.innerHTML = `<div id="overlay"></div><div id='one-modal'></div>${body.inner
 const container = document.getElementById('app');
 container.classList.add('container');
 // remplir le container avec titre/select/la modal/...
-container.innerHTML = `<h1>Hackerflix</h1>
+container.innerHTML = `
+                       <h1>Hackerflix</h1>
                        <h3>Vous pourriez aimer:</h3>
                        <div id="ThumbnailCarousel" class="carousel slide col-xs-12" data-ride="carousel">
                           <div class="carousel-inner">
@@ -96,9 +97,7 @@ const inCarrousel = () => {
     const marqueurOfLike = (movie.like) ? movie.marqueur : '';
     if (marqueurOfLike !== '') {
     // retrouver le film qui est à true dans le tableau movies
-      const movieGenreId = movies.indexOf(
-        movies.find((movie) => movie.title === marqueurOfLike || movie.imdb === marqueurOfLike),
-      );
+      const movieGenreId = movies.findIndex((movie) => movie.title === marqueurOfLike || movie.imdb === marqueurOfLike);
       // Push dans un tableau, tous les genres liké avec une note qui commence à 1.
       // Si le même genre revient, note +1
       movies[movieGenreId].genres.forEach((genre) => {
@@ -106,6 +105,7 @@ const inCarrousel = () => {
           genresInCarrousel.push({ category: `${genre}`, note: 1 });
         } else {
           const isInArray = genresInCarrousel.map((category) => category.category);
+          // .some()????
           if (isInArray.includes(genre)) {
             const idOfGenre = isInArray.indexOf(genre);
             genresInCarrousel[idOfGenre].note += 1;
@@ -121,29 +121,51 @@ const inCarrousel = () => {
   movies.forEach((movie) => {
     if (genresInCarrousel.length > 0) {
       for (let i = 0; i < genresInCarrousel.length; i++) {
-        if (!pictureInCarrousel.includes(movie)) {
-          // tant que le tableau n'est pas rempli avec 12 films,
-          // on va chercher les films qui ont le même genre que le genre liké en [0], puis en [1]
-          // jusqu'à avoir 12 films différents dans le tableau.
-          if (pictureInCarrousel.length < 12) {
-            if (movie.genres.includes(genresInCarrousel[i].category)) {
-              pictureInCarrousel.push(movie);
-            }
-          }
+        // tant que le tableau n'est pas rempli avec 12 films,
+        // on va chercher les films qui ont le même genre que le genre liké en [0], puis en [1]
+        // jusqu'à avoir 12 films différents dans le tableau.
+        const isNotInCarousel = !pictureInCarrousel.includes(movie);
+        const carouselIsNotFull = pictureInCarrousel.length < 12;
+        const genreIsOK = movie.genres.includes(genresInCarrousel[i].category);
+        if (isNotInCarousel && carouselIsNotFull && genreIsOK) {
+          pictureInCarrousel.push(movie);
         }
       }
     }
   });
-  console.log(pictureInCarrousel);
   // on les affiche dans le carousel
   renderInCarousel(pictureInCarrousel, carousel);
 };
+
+// fonction quand on clique sur les images
+function imgTopHandler(e) {
+  let movieId;
+  // Si c'est un carré de couleur => aller chercher le titre
+  if (e.target.classList.contains('img-default')) {
+    movieId = movies.findIndex((movie) => movie.title === e.target.innerHTML);
+    // Si c'est une image => aller chercher le nom de l'image
+  } else {
+    const imgOfMovie = (e.target.getAttribute('src'));
+    movieId = movies.findIndex((movie) => movie.imdb === imgOfMovie.substring(0, imgOfMovie.length - 4));
+  }
+  // remplir la modal avec les infos du film cliqué
+  modal.innerHTML = `
+                      <span class="close-btn"><i class="fa fa-times close"></i></span>
+                           <h4>${movies[movieId].title}</h4>
+                           <p>${movies[movieId].plot}</p>
+                           <p>${movies[movieId].note}/10</p>
+                           <p class="genres">Genres: </p> `;
+  const classGenres = document.querySelector('.genres');
+  classGenres.innerHTML += movies[movieId].genres.join(', ');
+  // faire apparaitre modal+overlay
+  modal.style.display = 'flex';
+  overlay.classList.toggle('d-flex');
+}
 
 // vérifier si un film a déjà été liké. non => carousel par défaut oui => inCarousel
 const isLiked = moviesLike.filter((elt) => elt.like);
 (isLiked.length > 0) ? inCarrousel() : renderInCarousel(carouselDefault, carousel);
 render(movies, moviesLike, moviesContainer);
-console.log(carouselDefault);
 
 // rendre unique le tableau des genres => créer les options du select
 const uniqueMoviesGenre = uniqueArray(moviesGenre);
@@ -158,9 +180,15 @@ const toSortBy = () => {
   movies.sort(byNote);
   const filmsShown = optionNote.value === 'croissante' ? movies : movies.reverse();
   // Aller chercher les films qui ont seulement le genre voulu
-  const moviesByGenre = optionGenre.value === 'tout voir' ? filmsShown : filmsShown.map((movie) => (movie.genres
-    .map((genre) => genre.trim())
-    .includes(optionGenre.value) ? movie : null));
+  let moviesByGenre = filmsShown;
+  if (optionGenre.value !== 'tout voir') {
+    moviesByGenre = filmsShown.filter((movie) => {
+      // petit clean de genres
+      const genres = movie.genres.map((genre) => genre.trim());
+      // ne garder que les films ayant le genre choisit
+      return genres.includes(optionGenre.value);
+    });
+  }
   // Si le bouton film récent à la classe active, on enlève les anciens films
   const filmAfter2000 = moviesByGenre.map((movie) => (movie !== null && movie.year > 2000 ? movie : null));
   const arrOfMovies = recentMovies.classList.contains('active') ? filmAfter2000 : moviesByGenre;
@@ -170,36 +198,9 @@ toSortBy();
 
 // clic sur le body
 body.addEventListener('click', (e) => {
-  let movieId;
   // Si on clique sur une image
-  if (e.target.classList.contains('card-img-top')) {
-    // Si c'est un carré de couleur => aller chercher le titre
-    if (e.target.classList.contains('img-default')) {
-      movieId = movies.indexOf(
-        movies.find((movie) => movie.title === e.target.innerHTML),
-      );
-      // Si c'est une image => aller chercher le nom de l'image
-    } else {
-      const imgOfMovie = (e.target.getAttribute('src'));
-      movieId = movies.indexOf(
-        movies.find((movie) => movie.imdb === imgOfMovie.substring(0, imgOfMovie.length - 4)),
-      );
-    }
-    // remplir la modal avec les infos du film cliqué
-    modal.innerHTML = `<span class="close-btn"><i class="fa fa-times close"></i></span>
-                             <h4>${movies[movieId].title}</h4>
-                             <p>${movies[movieId].plot}</p>
-                             <p>${movies[movieId].note}/10</p>
-                             <p class="genres">Genres: </p> `;
-    const classGenres = document.querySelector('.genres');
-    movies[movieId].genres.forEach((genre, i) => {
-      const oneGenre = i === movies[movieId].genres.length - 1 ? genre : `${genre}, `;
-      classGenres.innerHTML += `${oneGenre}`;
-    });
-    // faire apparaitre modal+overlay
-    modal.style.display = 'flex';
-    overlay.classList.toggle('d-flex');
-
+  if (e.target.matches('.card-img-top')) {
+    imgTopHandler(e);
   // Si on clique sur la croix pour fermer la modal
   } else if (e.target.classList.contains('close')) {
     modal.style.display = 'none';
@@ -207,7 +208,7 @@ body.addEventListener('click', (e) => {
     modal.innerHTML = '';
 
     // Si on clique sur un coeur
-  } else if (e.target.classList.contains('fa-heart')) {
+  } else if (e.target.matches('.fa-heart')) {
     const imgSiblings = e.target.closest('.card-container').querySelector('.card-img-top');
     let movieLikeId;
     // retrouver le film dans le tableau moviesLike grâce à l'image ou au titre
@@ -225,32 +226,27 @@ body.addEventListener('click', (e) => {
     }
     // mettre un coeur plein/vide
     // changer le false => true  true =>false
-    if (e.target.classList.contains('fa-heart')) {
-      if (e.target.classList.contains('far')) {
-        e.target.classList.replace('far', 'fas');
-        moviesLike[movieLikeId].like = true;
-      } else {
-        e.target.classList.replace('fas', 'far');
-        moviesLike[movieLikeId].like = false;
-      }
-      // générer le carousel + stock des données => local storage
-      inCarrousel();
-      stockData(moviesLike);
+    if (e.target.classList.contains('far')) {
+      e.target.classList.replace('far', 'fas');
+    } else {
+      e.target.classList.replace('fas', 'far');
     }
+    moviesLike[movieLikeId].like = !moviesLike[movieLikeId].like;
+    // générer le carousel + stock des données => local storage
+    inCarrousel();
+    stockData(moviesLike);
   }
 });
 
 //  Si on clique sur un bouton de tri
-const btnForSort = document.querySelectorAll('.tri');
-btnForSort.forEach((btn) => {
-  if (btn.id === 'recent-film') {
-    btn.addEventListener('click', () => {
-      btn.classList.toggle('active');
-      toSortBy();
-    });
-  } else {
-    btn.addEventListener('change', () => {
-      toSortBy();
-    });
-  }
+const btnForSort = document.querySelector('#recent-film');
+btnForSort.addEventListener('click', () => {
+  btnForSort.classList.toggle('active');
+  toSortBy();
+});
+const selectForSort = document.querySelectorAll('.custom-select');
+selectForSort.forEach((btn) => {
+  btn.addEventListener('change', () => {
+    toSortBy();
+  });
 });
